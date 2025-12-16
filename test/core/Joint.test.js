@@ -5,6 +5,8 @@ import { findRoots } from '../../src/core/utils/findRoots.js';
 import { quaternionDistance } from '../../src/core/utils/quaternion.js';
 import { RAD2DEG } from '../../src/core/utils/constants.js';
 
+const Z_AXIS = [ 0, 0, 1 ];
+
 describe( 'Joint', () => {
 
 	describe( 'clearDoF', () => {
@@ -496,11 +498,11 @@ describe( 'Joint', () => {
 			const expectedPos = new Float32Array( 3 );
 			const expectedQuat = new Float32Array( 4 );
 
-			mat4.fromRotation( inverseDoF, - Math.PI / 2, [ 0, 0, 1 ] );
+			mat4.fromRotation( inverseDoF, - Math.PI / 2, Z_AXIS );
 			vec3.sub( expectedPos, startPos, joint.position );
 			vec3.transformMat4( expectedPos, expectedPos, inverseDoF );
 			vec3.add( expectedPos, expectedPos, joint.position );
-			quat.setAxisAngle( expectedQuat, [ 0, 0, 1 ], - Math.PI / 2 );
+			quat.setAxisAngle( expectedQuat, Z_AXIS, - Math.PI / 2 );
 
 			expect( endPos[ 0 ] ).toBeCloseTo( expectedPos[ 0 ], 6 );
 			expect( endPos[ 1 ] ).toBeCloseTo( expectedPos[ 1 ], 6 );
@@ -548,7 +550,7 @@ describe( 'Joint', () => {
 			const expectedPos = new Float32Array( 3 );
 			const expectedQuat = new Float32Array( 4 );
 
-			mat4.fromRotation( inverseDoF, Math.PI / 4, [ 0, 0, 1 ] );
+			mat4.fromRotation( inverseDoF, Math.PI / 4, Z_AXIS );
 			mat4.fromTranslation( toJoint, joint.position );
 			vec3.negate( negativeJoint, joint.position );
 			mat4.fromTranslation( fromJoint, negativeJoint );
@@ -560,7 +562,7 @@ describe( 'Joint', () => {
 			mat4.multiply( combinedTransform, toJoint, combinedTransform );
 			mat4.multiply( combinedTransform, inverseDoF, combinedTransform );
 			vec3.transformMat4( expectedPos, startPos, combinedTransform );
-			quat.setAxisAngle( expectedQuat, [ 0, 0, 1 ], Math.PI / 2 );
+			quat.setAxisAngle( expectedQuat, Z_AXIS, Math.PI / 2 );
 
 			expect( endPos[ 0 ] ).toBeCloseTo( expectedPos[ 0 ], 6 );
 			expect( endPos[ 1 ] ).toBeCloseTo( expectedPos[ 1 ], 6 );
