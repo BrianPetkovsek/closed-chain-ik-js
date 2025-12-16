@@ -24,6 +24,13 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+
+    - name: Set up Emscripten
+      uses: mymindstorm/setup-emsdk@v12
+      with:
+        version: latest
+        cache: true
+    
     - run: npm ci
     - run: npm run build
 
