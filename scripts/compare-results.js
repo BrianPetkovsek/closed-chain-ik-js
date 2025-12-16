@@ -7,6 +7,7 @@ const SAMPLE_COUNT = Number( process.env.CCIK_SAMPLES || '8' );
 const LCG_MOD = 2147483647;
 const LCG_MULT = 16807;
 const LCG_NORM = 2147483646;
+const ORIGIN = [ 0, 0, 0 ];
 
 function seededRandomGenerator( seed = 12345 ) {
 	let value = seed % LCG_MOD;
@@ -40,7 +41,7 @@ function solveWithJS( target ) {
 	joint2.setPosition( 0, 0, 1 );
 
 	const link2 = new Link();
-	link2.setPosition( 0, 0, 1 );
+	link2.setPosition( 0, 0, 0 );
 
 	const goal = new Goal();
 	link2.getWorldPosition( goal.position );
@@ -71,16 +72,27 @@ function solveWithWasm( target, ccik ) {
 		minLimit: -Math.PI,
 		maxLimit: Math.PI,
 		value: 0,
+		name: 'joint-1',
 	};
 
-	const chain = new ccik.Chain( [ jointSpec, { ...jointSpec } ], { x: 0, y: 0, z: 0 } );
+	const chain = new ccik.Chain();
+	chain.setBasePosition( { x: 0, y: 0, z: 0 } );
+	const specs = new ccik.JointSpecList();
+	specs.push_back( jointSpec );
+	specs.push_back( { ...jointSpec, name: 'joint-2' } );
+	chain.setJoints( specs );
 	const solver = new ccik.IKSolver( chain );
 	solver.setTolerance( ccik.CCIK_TOLERANCE );
 	solver.setTarget( { x: target[ 0 ], y: target[ 1 ], z: target[ 2 ] } );
 	solver.solve( 50 );
 
 	const positions = solver.getPositions();
-	const end = positions[ positions.length - 1 ];
+	const endIndex = positions.size() - 1;
+	if ( endIndex < 0 ) {
+		return ORIGIN;
+	}
+
+	const end = positions.get( endIndex );
 	return [ end.x, end.y, end.z ];
 }
 
