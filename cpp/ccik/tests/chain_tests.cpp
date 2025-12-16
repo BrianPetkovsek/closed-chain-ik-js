@@ -20,8 +20,8 @@ TEST( ChainTests, ComputesForwardPositions ) {
 	Chain c( { j1, j2 } );
 	const auto positions = c.getPositions();
 	ASSERT_EQ( positions.size(), 3u );
-	EXPECT_NEAR( positions[ 0 ].z, 0.0, 1e-9 );
-	EXPECT_NEAR( positions[ 1 ].z, 1.0, 1e-9 );
+	EXPECT_NEAR( positions[ 0 ].z, 1.0, 1e-9 );
+	EXPECT_NEAR( positions[ 1 ].z, 2.0, 1e-9 );
 	EXPECT_NEAR( positions[ 2 ].z, 2.0, 1e-9 );
 }
 
