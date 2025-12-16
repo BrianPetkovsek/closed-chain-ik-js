@@ -77,9 +77,10 @@ function solveWithJS( profile, target ) {
 	parent.getWorldPosition( goal.position );
 	parent.getWorldQuaternion( goal.quaternion );
 	goal.makeClosure( parent );
-	goal.setPosition( ...target );
+	root.addChild( goal );
+	goal.setWorldPosition( ...target );
 
-	const solver = new Solver( root );
+	const solver = new Solver( [ root, goal ] );
 	solver.maxIterations = 60;
 	solver.translationConvergeThreshold = 5e-5;
 	solver.rotationConvergeThreshold = 1e-6;
