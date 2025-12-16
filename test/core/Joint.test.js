@@ -362,6 +362,7 @@ describe( 'Joint', () => {
 			const pos = new Float32Array( 3 );
 			mat4.getTranslation( pos, outMatrix );
 
+			// When the opposite limit has more slack the delta is inverted instead of clamped.
 			expect( inverted ).toBeTruthy();
 			expect( pos[ 0 ] ).toBeCloseTo( 0.2, 6 );
 			expect( pos[ 1 ] ).toBeCloseTo( 0, 7 );
@@ -502,7 +503,7 @@ describe( 'Joint', () => {
 			vec3.sub( expectedPos, startPos, joint.position );
 			vec3.transformMat4( expectedPos, expectedPos, inverseDoF );
 			vec3.add( expectedPos, expectedPos, joint.position );
-			quat.setAxisAngle( expectedQuat, Z_AXIS, - Math.PI / 2 );
+			mat4.getRotation( expectedQuat, inverseDoF );
 
 			expect( endPos[ 0 ] ).toBeCloseTo( expectedPos[ 0 ], 6 );
 			expect( endPos[ 1 ] ).toBeCloseTo( expectedPos[ 1 ], 6 );
@@ -562,7 +563,7 @@ describe( 'Joint', () => {
 			mat4.multiply( combinedTransform, toJoint, combinedTransform );
 			mat4.multiply( combinedTransform, inverseDoF, combinedTransform );
 			vec3.transformMat4( expectedPos, startPos, combinedTransform );
-			quat.setAxisAngle( expectedQuat, Z_AXIS, Math.PI / 2 );
+			mat4.getRotation( expectedQuat, combinedTransform );
 
 			expect( endPos[ 0 ] ).toBeCloseTo( expectedPos[ 0 ], 6 );
 			expect( endPos[ 1 ] ).toBeCloseTo( expectedPos[ 1 ], 6 );
