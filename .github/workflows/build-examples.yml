@@ -29,7 +29,6 @@ jobs:
       uses: mymindstorm/setup-emsdk@v12
       with:
         version: latest
-        cache: true
     
     - run: npm ci
     - run: npm run build
