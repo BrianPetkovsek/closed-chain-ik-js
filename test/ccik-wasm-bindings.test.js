@@ -1,4 +1,7 @@
-import { Solver, Joint, Link, Goal, DOF } from '../src/index.js';
+import { Solver } from '../src/core/Solver.js';
+import { Joint, DOF } from '../src/core/Joint.js';
+import { Link } from '../src/core/Link.js';
+import { Goal } from '../src/core/Goal.js';
 import { loadCCIK } from '../lib/ccik-wasm.js';
 
 jest.setTimeout( 15000 );
