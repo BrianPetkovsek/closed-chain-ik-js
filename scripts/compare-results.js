@@ -4,12 +4,15 @@ import { loadCCIK } from '../lib/ccik-wasm.js';
 
 const ERROR_THRESHOLD = Number( process.env.CCIK_MAX_ERROR || '1e-4' );
 const SAMPLE_COUNT = Number( process.env.CCIK_SAMPLES || '8' );
+const LCG_MOD = 2147483647;
+const LCG_MULT = 16807;
+const LCG_NORM = 2147483646;
 
 function seededRandomGenerator( seed = 12345 ) {
-	let value = seed % 2147483647;
+	let value = seed % LCG_MOD;
 	return () => {
-		value = value * 16807 % 2147483647;
-		return ( value - 1 ) / 2147483646;
+		value = value * LCG_MULT % LCG_MOD;
+		return ( value - 1 ) / LCG_NORM;
 	};
 }
 

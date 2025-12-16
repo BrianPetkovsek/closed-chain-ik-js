@@ -21,6 +21,9 @@ std::vector<double> solveLinear( std::vector<std::vector<double>> A, const std::
 	for ( std::size_t i = 0; i < n; ++i ) {
 		double pivot = A[ i ][ i ];
 		if ( std::abs( pivot ) < std::numeric_limits<double>::epsilon() ) {
+			// Avoid singular pivots by nudging the diagonal; this mirrors the
+			// damping term used elsewhere and prevents division by zero when
+			// the jacobian is rank deficient.
 			pivot = std::copysign( std::numeric_limits<double>::epsilon(), pivot == 0.0 ? 1.0 : pivot );
 			A[ i ][ i ] = pivot;
 		}

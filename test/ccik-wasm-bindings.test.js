@@ -1,7 +1,7 @@
 import { Solver, Joint, Link, Goal, DOF } from '../src/index.js';
 import { loadCCIK } from '../lib/ccik-wasm.js';
 
-jest.setTimeout( 30000 );
+jest.setTimeout( 15000 );
 
 function buildJsSolution( target ) {
 	const root = new Link();
