@@ -78,12 +78,13 @@ std::vector<JointState> Chain::getJointStates() const {
 
 	for ( const auto &spec : m_specs ) {
 		Vec3 axisWorld = applyMat( rot, spec.axis ).normalized();
-		out.push_back( { pos, axisWorld, spec.mode } );
 
 		if ( spec.mode == JointMode::Rotation ) {
-			rot = multiply( rot, rotationAroundAxis( axisWorld, spec.value ) );
 			pos = pos + applyMat( rot, Vec3( 0.0, 0.0, spec.length ) );
+			out.push_back( { pos, axisWorld, spec.mode } );
+			rot = multiply( rot, rotationAroundAxis( axisWorld, spec.value ) );
 		} else {
+			out.push_back( { pos, axisWorld, spec.mode } );
 			pos = pos + axisWorld * spec.value;
 			pos = pos + axisWorld * spec.length;
 		}
@@ -100,13 +101,14 @@ std::vector<Vec3> Chain::getPositions() const {
 	Vec3 pos = m_base;
 
 	for ( const auto &spec : m_specs ) {
-		positions.push_back( pos );
 		Vec3 axisWorld = applyMat( rot, spec.axis ).normalized();
 
 		if ( spec.mode == JointMode::Rotation ) {
-			rot = multiply( rot, rotationAroundAxis( axisWorld, spec.value ) );
 			pos = pos + applyMat( rot, Vec3( 0.0, 0.0, spec.length ) );
+			positions.push_back( pos );
+			rot = multiply( rot, rotationAroundAxis( axisWorld, spec.value ) );
 		} else {
+			positions.push_back( pos );
 			pos = pos + axisWorld * spec.value;
 			pos = pos + axisWorld * spec.length;
 		}

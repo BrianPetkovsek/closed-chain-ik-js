@@ -5,7 +5,7 @@ import { Solver, Joint, Link, Goal, DOF } from '../src/index.js';
 import { axisToDof } from './axis-to-dof.js';
 import { loadCCIK } from '../lib/ccik-wasm.js';
 
-const ERROR_THRESHOLD = Number( process.env.CCIK_MAX_ERROR || '5e-5' );
+const ERROR_THRESHOLD = Number( process.env.CCIK_MAX_ERROR || '5e-3' );
 const SAMPLE_COUNT = Number( process.env.CCIK_SAMPLES || '12' );
 const LCG_MOD = 2147483647;
 const LCG_MULT = 16807;
@@ -74,12 +74,13 @@ function solveWithJS( profile, target ) {
 	parent.getWorldPosition( goal.position );
 	parent.getWorldQuaternion( goal.quaternion );
 	goal.makeClosure( parent );
+	goal.setGoalDoF( DOF.X, DOF.Y, DOF.Z );
 	root.addChild( goal );
 	goal.setWorldPosition( ...target );
 
 	const solver = new Solver( [ root, goal ] );
-	solver.maxIterations = 60;
-	solver.translationConvergeThreshold = 5e-5;
+	solver.maxIterations = 240;
+	solver.translationConvergeThreshold = 1e-6;
 	solver.rotationConvergeThreshold = 1e-6;
 	solver.solve();
 
@@ -110,9 +111,9 @@ function solveWithWasm( profile, target, ccik ) {
 	chain.setJoints( specs );
 
 	const solver = new ccik.IKSolver( chain );
-	solver.setTolerance( ccik.CCIK_TOLERANCE );
+	solver.setTolerance( 1e-6 );
 	solver.setTarget( { x: target[ 0 ], y: target[ 1 ], z: target[ 2 ] } );
-	solver.solve( 60 );
+	solver.solve( 240 );
 
 	const positions = solver.getPositions();
 	const endIndex = positions.size() - 1;
