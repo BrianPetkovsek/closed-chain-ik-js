@@ -67,7 +67,7 @@ describe( 'Solver integration', () => {
 
 	it( 'maintains zero-error closure across diverse targets already satisfied', () => {
 
-		const axes = [ [ 0, 0, 1 ], [ 0, 0, 1 ] ];
+		const axes = [[ 0, 0, 1 ], [ 0, 0, 1 ]];
 		const lengths = [ 0.9, 1.1 ];
 		const { roots, end, goal } = buildChain( axes, lengths );
 		const solver = new Solver( roots );
@@ -103,7 +103,7 @@ describe( 'Solver integration', () => {
 
 	it( 'matches forward transforms for mixed-axis rotations with tight tolerance', () => {
 
-		const axes = [ [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 0 ] ];
+		const axes = [[ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 0 ]];
 		const lengths = [ 0.6, 0.8, 0.5 ];
 		const { roots, end } = buildChain( axes, lengths, [ DOF.X, DOF.Y, DOF.Z, DOF.EX, DOF.EY, DOF.EZ ] );
 
