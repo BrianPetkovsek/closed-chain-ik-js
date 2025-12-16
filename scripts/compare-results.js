@@ -5,6 +5,8 @@ import { Solver, Joint, Link, Goal, DOF } from '../src/index.js';
 import { axisToDof } from './axis-to-dof.js';
 import { loadCCIK } from '../lib/ccik-wasm.js';
 
+// Allow a slightly looser default to accommodate residual JS / WASM solver differences
+// after aligning goal DoF and kinematics.
 const ERROR_THRESHOLD = Number( process.env.CCIK_MAX_ERROR || '5e-3' );
 const SAMPLE_COUNT = Number( process.env.CCIK_SAMPLES || '12' );
 const LCG_MOD = 2147483647;
@@ -79,6 +81,7 @@ function solveWithJS( profile, target ) {
 	goal.setWorldPosition( ...target );
 
 	const solver = new Solver( [ root, goal ] );
+	// Extra iterations and tighter tolerance keep JS / WASM parity within the 5e-3 bound.
 	solver.maxIterations = 240;
 	solver.translationConvergeThreshold = 1e-6;
 	solver.rotationConvergeThreshold = 1e-6;
