@@ -42,6 +42,7 @@ function buildChain( axes, lengths, goalDoF = [ DOF.X, DOF.Y, DOF.Z ] ) {
 	goal.makeClosure( parent );
 	goal.setGoalDoF( ...goalDoF );
 
+	// Attach the goal after linking it to the end effector so it participates in solver traversal.
 	root.addChild( goal );
 
 	return { roots: [ root, goal ], end: parent, goal };
