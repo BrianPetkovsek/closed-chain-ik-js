@@ -21,6 +21,7 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 *.lcov
+_codeql_detected_source_root
 
 # nyc test coverage
 .nyc_output
@@ -116,3 +117,8 @@ out
 
 # local testing
 local
+
+# CMake / Emscripten outputs
+build/
+build-*/
+dist/
