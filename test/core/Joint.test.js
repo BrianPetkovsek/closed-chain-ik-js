@@ -440,7 +440,7 @@ describe( 'Joint', () => {
 
 	describe( 'updateMatrixDoF', () => {
 
-		it( 'should update matrixDoF correctly based on the dofValues.', () => {
+		it( 'should update matrixDoF via updateDoFMatrix based on the dofValues.', () => {
 
 			const joint = new Joint();
 			joint.setDoF( DOF.X, DOF.EZ );
@@ -541,17 +541,23 @@ describe( 'Joint', () => {
 			child.getWorldQuaternion( endQuat );
 
 			const inverseDoF = new Float32Array( 16 );
-			const expectedAfterAttach = new Float32Array( 3 );
+			const toJoint = new Float32Array( 16 );
+			const fromJoint = new Float32Array( 16 );
+			const combinedTransform = new Float32Array( 16 );
+			const negativeJoint = new Float32Array( 3 );
 			const expectedPos = new Float32Array( 3 );
 			const expectedQuat = new Float32Array( 4 );
 
 			mat4.fromRotation( inverseDoF, Math.PI / 4, [ 0, 0, 1 ] );
-			vec3.sub( expectedAfterAttach, startPos, joint.position );
-			vec3.transformMat4( expectedAfterAttach, expectedAfterAttach, inverseDoF );
-			vec3.add( expectedAfterAttach, expectedAfterAttach, joint.position );
+			mat4.fromTranslation( toJoint, joint.position );
+			vec3.negate( negativeJoint, joint.position );
+			mat4.fromTranslation( fromJoint, negativeJoint );
 
 			// detachChild applies the inverse DoF again on the world matrix after removal
-			vec3.transformMat4( expectedPos, expectedAfterAttach, inverseDoF );
+			mat4.multiply( combinedTransform, inverseDoF, fromJoint );
+			mat4.multiply( combinedTransform, toJoint, combinedTransform );
+			mat4.multiply( combinedTransform, inverseDoF, combinedTransform );
+			vec3.transformMat4( expectedPos, startPos, combinedTransform );
 			quat.fromEuler( expectedQuat, 0, 0, 90 );
 
 			expect( endPos[ 0 ] ).toBeCloseTo( expectedPos[ 0 ], 6 );
