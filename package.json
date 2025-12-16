@@ -28,7 +28,11 @@
     "start": "vite --config ./vite.config.js",
     "build": "vite build --config ./vite.config.js",
     "lint": "eslint \"./src/**/*.js\" \"./test/**/*.js\" && tsc -p tsconfig.json --noEmit",
-    "test": "cd test && jest"
+    "build:wasm": "mkdir -p build/wasm && cd build/wasm && emcmake cmake ../../cpp/ccik -DCMAKE_BUILD_TYPE=Release && cmake --build . --target ccik_wasm",
+    "build:native": "cmake -S cpp/ccik -B build/native -DCMAKE_BUILD_TYPE=Release && cmake --build build/native",
+    "test:cpp": "cmake --build build/native --target ccik_tests && ctest --test-dir build/native --output-on-failure",
+    "compare": "node scripts/compare-results.js",
+    "test": "npm run build:wasm && cd test && jest --runInBand --testTimeout=30000"
   },
   "repository": {
     "type": "git",

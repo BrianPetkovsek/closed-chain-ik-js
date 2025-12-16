@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Set up Emscripten
+        uses: mymindstorm/setup-emsdk@v12
+        with:
+          version: latest
+          cache: true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build WASM artifacts
+        run: npm run build:wasm
+
+      - name: Run JS tests
+        run: npm test
+
+      - name: Build native C++ library
+        run: cmake -S cpp/ccik -B build/native -DCMAKE_BUILD_TYPE=Release && cmake --build build/native
+
+      - name: Run C++ unit tests
+        run: ctest --test-dir build/native --output-on-failure
+
+      - name: Parity check (JS vs WASM)
+        run: node scripts/compare-results.js

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>CCIK WASM Demo</title>
+	<style>
+		body, html {
+			margin: 0;
+			padding: 0;
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			font-family: sans-serif;
+		}
+		#scene {
+			width: 100%;
+			height: 100%;
+		}
+		#info {
+			position: absolute;
+			top: 8px;
+			left: 8px;
+			background: rgba(0,0,0,0.6);
+			color: #fff;
+			padding: 8px 12px;
+			border-radius: 4px;
+		}
+	</style>
+</head>
+<body>
+	<div id="scene"></div>
+	<div id="info">Move the mouse to drag the IK target (WASM solver)</div>
+	<script type="module" src="./wasm-demo.js"></script>
+</body>
+</html>

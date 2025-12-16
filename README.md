@@ -199,6 +199,54 @@ setIKFromUrdf( ikRoot : Joint, robot : URDFRobot ) : void
 
 Copies the joint values from `ikRoot` onto `robot` based on joint names.
 
+# Native C++ and WASM build
+
+The core solver is also available as a native C++ library with Emscripten bindings that preserve the JavaScript API shape.
+
+## Build artifacts
+
+```
+npm run build:wasm            # produces dist/ccik.js and dist/ccik.wasm
+cmake -S cpp/ccik -B build/native -DCMAKE_BUILD_TYPE=Release
+cmake --build build/native    # builds libccik.a and the C++ test runner
+```
+
+## Running tests
+
+```
+npm test                       # builds WASM then runs the JS + WASM Jest suite
+cmake --build build/native --target ccik_tests
+ctest --test-dir build/native  # C++ unit tests (GoogleTest)
+node scripts/compare-results.js # Randomized JS vs WASM parity check
+```
+
+## Using the WASM module
+
+Node:
+
+```js
+import loadCCIK from './lib/ccik-wasm.js';
+
+const ccik = await loadCCIK();
+const joint = { axis: { x: 0, y: 0, z: 1 }, length: 1, mode: ccik.JointMode.Rotation };
+const solver = new ccik.IKSolver( new ccik.Chain( [ joint, { ...joint } ], { x: 0, y: 0, z: 0 } ) );
+solver.setTarget( { x: 0.8, y: 0.6, z: 0 } );
+solver.solve( 32 );
+console.log( solver.getPositions().pop() );
+```
+
+Browser:
+
+```html
+<script type="module" src="./examples/wasm-demo.js"></script>
+```
+
+See `examples/wasm-demo.html` for a minimal three.js visualization and `examples/node-wasm-example.js` for a Node entry point.
+
+## Parity & benchmarking
+
+The shared numeric tolerance is `1e-6` (`CCIK_TOLERANCE`). Run `npm run compare` (or `node scripts/compare-results.js`) to compare the JS and WASM solvers over seeded random targets. Override the maximum allowed error with `CCIK_MAX_ERROR`.
+
 ## Frame
 
 A base class for `Link`, `Joint`, and `Goal` representing a frame defined by a position and rotation in space.

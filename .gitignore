@@ -116,3 +116,8 @@ out
 
 # local testing
 local
+
+# CMake / Emscripten outputs
+build/
+build-*/
+dist/
