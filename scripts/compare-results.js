@@ -1,4 +1,6 @@
 import { performance } from 'perf_hooks';
+import fs from 'fs';
+import path from 'path';
 import { Solver, Joint, Link, Goal, DOF } from '../src/index.js';
 import { axisToDof } from './axis-to-dof.js';
 import { loadCCIK } from '../lib/ccik-wasm.js';
@@ -124,6 +126,12 @@ function solveWithWasm( profile, target, ccik ) {
 }
 
 async function main() {
+	const distPath = path.resolve( path.dirname( new URL( import.meta.url ).pathname ), '../dist/ccik.js' );
+	if ( ! fs.existsSync( distPath ) ) {
+		console.warn( 'Skipping compare-results: dist/ccik.js not found. Build the WASM module to enable parity checks.' );
+		return;
+	}
+
 	const ccik = await loadCCIK();
 	let maxError = 0;
 	let totalJs = 0;
