@@ -500,7 +500,7 @@ describe( 'Joint', () => {
 			vec3.sub( expectedPos, startPos, joint.position );
 			vec3.transformMat4( expectedPos, expectedPos, inverseDoF );
 			vec3.add( expectedPos, expectedPos, joint.position );
-			quat.fromEuler( expectedQuat, 0, 0, - 90 );
+			quat.setAxisAngle( expectedQuat, [ 0, 0, 1 ], - Math.PI / 2 );
 
 			expect( endPos[ 0 ] ).toBeCloseTo( expectedPos[ 0 ], 6 );
 			expect( endPos[ 1 ] ).toBeCloseTo( expectedPos[ 1 ], 6 );
@@ -553,13 +553,14 @@ describe( 'Joint', () => {
 			vec3.negate( negativeJoint, joint.position );
 			mat4.fromTranslation( fromJoint, negativeJoint );
 
-			// Apply the inverse DoF about the joint, then apply the same inverse again
-			// to mirror detachChild updating the world matrix after removal.
+			// Apply inverseDoF about the joint (T(joint) * inverseDoF * T(-joint))
+			// and then apply inverseDoF again to mirror detachChild updating the
+			// world matrix after removal: inverseDoF * T(joint) * inverseDoF * T(-joint).
 			mat4.multiply( combinedTransform, inverseDoF, fromJoint );
 			mat4.multiply( combinedTransform, toJoint, combinedTransform );
 			mat4.multiply( combinedTransform, inverseDoF, combinedTransform );
 			vec3.transformMat4( expectedPos, startPos, combinedTransform );
-			quat.fromEuler( expectedQuat, 0, 0, 90 );
+			quat.setAxisAngle( expectedQuat, [ 0, 0, 1 ], Math.PI / 2 );
 
 			expect( endPos[ 0 ] ).toBeCloseTo( expectedPos[ 0 ], 6 );
 			expect( endPos[ 1 ] ).toBeCloseTo( expectedPos[ 1 ], 6 );
