@@ -8,12 +8,12 @@ describe( 'MatrixPool', () => {
 		let mat;
 
 		mat = pool.get( 2, 3 );
-		expect( mat.length ).toEqual( 2 );
-		expect( mat[ 0 ].length ).toEqual( 3 );
+		expect( mat ).toHaveLength( 2 );
+		expect( mat[ 0 ] ).toHaveLength( 3 );
 
 		mat = pool.get( 5, 4 );
-		expect( mat.length ).toEqual( 5 );
-		expect( mat[ 0 ].length ).toEqual( 4 );
+		expect( mat ).toHaveLength( 5 );
+		expect( mat[ 0 ] ).toHaveLength( 4 );
 
 	} );
 

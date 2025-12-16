@@ -4,6 +4,7 @@ import { loadCCIK } from '../lib/ccik-wasm.js';
 jest.setTimeout( 15000 );
 
 function buildJsSolution( target ) {
+
 	const root = new Link();
 
 	const joint1 = new Joint();
@@ -37,15 +38,18 @@ function buildJsSolution( target ) {
 
 	const pos = new Float32Array( 3 );
 	link2.getWorldPosition( pos );
+
 	return [ pos[ 0 ], pos[ 1 ], pos[ 2 ] ];
+
 }
 
 function buildWasmSolution( target, ccik ) {
+
 	const jointSpec = {
 		axis: { x: 0, y: 0, z: 1 },
 		length: 1,
 		mode: ccik.JointMode.Rotation,
-		minLimit: -Math.PI,
+		minLimit: - Math.PI,
 		maxLimit: Math.PI,
 		value: 0,
 	};
@@ -58,26 +62,38 @@ function buildWasmSolution( target, ccik ) {
 
 	const positions = solver.getPositions();
 	const end = positions[ positions.length - 1 ];
+
 	return [ end.x, end.y, end.z ];
+
 }
 
 function distance( a, b ) {
+
 	const dx = a[ 0 ] - b[ 0 ];
 	const dy = a[ 1 ] - b[ 1 ];
 	const dz = a[ 2 ] - b[ 2 ];
+
 	return Math.sqrt( dx * dx + dy * dy + dz * dz );
+
 }
 
 describe( 'ccik WASM bindings', () => {
+
 	let ccik;
 	beforeAll( async () => {
+
 		ccik = await loadCCIK();
+
 	} );
 
 	it( 'matches JS solver output within tolerance', async () => {
+
 		const target = [ 0.8, 0.6, 0 ];
+
 		const jsPos = buildJsSolution( target );
 		const wasmPos = buildWasmSolution( target, ccik );
 		expect( distance( jsPos, wasmPos ) ).toBeLessThan( 1e-4 );
+
 	} );
+
 } );

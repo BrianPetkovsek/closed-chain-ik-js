@@ -25,11 +25,11 @@ if (EMSCRIPTEN)
 	)
 	target_link_options(ccik_wasm PRIVATE
 		"-O3"
-		"-s" "WASM=1"
-		"-s" "MODULARIZE=1"
-		"-s" "EXPORT_NAME=CCIKModule"
-		"-s" "EXPORT_ES6=1"
-		"-s" "ENVIRONMENT=web,worker,node"
+		"-sWASM=1"
+		"-sMODULARIZE=1"
+		"-sEXPORT_NAME=CCIKModule"
+		"-sEXPORT_ES6=1"
+		"-sENVIRONMENT=web,worker,node"
 		"--bind"
 	)
 endif()
