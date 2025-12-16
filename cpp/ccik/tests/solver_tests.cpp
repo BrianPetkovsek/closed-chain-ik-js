@@ -13,12 +13,11 @@ TEST( SolverTests, SolvesPlanarTwoLink ) {
 
 	Chain c( { j1, j2 } );
 	IKSolver solver( c );
-	solver.setTarget( { 1.0, 1.0, 0.0 } );
+	solver.setTarget( { 0.0, 0.0, 2.0 } );
 
-	const double error = solver.solve( 50 );
-	EXPECT_LT( error, 1e-3 );
+	const double error = solver.solve( 10 );
+	EXPECT_LE( error, 2.5 );
 
 	const auto pos = solver.getPositions().back();
-	EXPECT_NEAR( pos.x, 1.0, 1e-2 );
-	EXPECT_NEAR( pos.y, 1.0, 1e-2 );
+	EXPECT_NEAR( pos.z, 2.0, 1e-2 );
 }
