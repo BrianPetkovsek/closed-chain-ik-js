@@ -115,7 +115,7 @@ function solveWithWasm( profile, target, ccik ) {
 	const positions = solver.getPositions();
 	const endIndex = positions.size() - 1;
 	if ( endIndex < 0 ) {
-		console.warn( 'ccik returned no positions for profile', profile.name, 'target', target );
+		console.warn( `CCIK solver failed to compute positions for profile "${ profile.name }" with target [${ target.join( ', ' ) }]. This may indicate solver divergence or an invalid target configuration.` );
 		return ORIGIN;
 	}
 

@@ -5,6 +5,17 @@ import { Link } from '../../src/core/Link.js';
 import { Goal } from '../../src/core/Goal.js';
 import { axisToDof } from '../../scripts/axis-to-dof.js';
 
+const POSITION_TOLERANCE = 5e-4;
+const VECTOR_TOLERANCE = 5e-7;
+
+function expectVecClose( actual, expected, tol ) {
+
+	expect( Math.abs( actual[ 0 ] - expected[ 0 ] ) ).toBeLessThan( tol );
+	expect( Math.abs( actual[ 1 ] - expected[ 1 ] ) ).toBeLessThan( tol );
+	expect( Math.abs( actual[ 2 ] - expected[ 2 ] ) ).toBeLessThan( tol );
+
+}
+
 function buildChain( axes, lengths, goalDoF = [ DOF.X, DOF.Y, DOF.Z ] ) {
 
 	const root = new Link();
@@ -83,7 +94,7 @@ describe( 'Solver integration', () => {
 			const dy = result[ 1 ] - target[ 1 ];
 			const dz = result[ 2 ] - target[ 2 ];
 
-			expect( Math.hypot( dx, dy, dz ) ).toBeLessThan( 5e-4 );
+			expect( Math.hypot( dx, dy, dz ) ).toBeLessThan( POSITION_TOLERANCE );
 
 		} );
 
@@ -133,9 +144,7 @@ describe( 'Solver integration', () => {
 		const expected = new Float32Array( 3 );
 		mat4.getTranslation( expected, m3 );
 
-		expect( Math.abs( worldPos[ 0 ] - expected[ 0 ] ) ).toBeLessThan( 5e-7 );
-		expect( Math.abs( worldPos[ 1 ] - expected[ 1 ] ) ).toBeLessThan( 5e-7 );
-		expect( Math.abs( worldPos[ 2 ] - expected[ 2 ] ) ).toBeLessThan( 5e-7 );
+		expectVecClose( worldPos, expected, VECTOR_TOLERANCE );
 
 	} );
 

@@ -26,7 +26,7 @@ TEST( SolverTests, SolvesPlanarTwoLink ) {
 }
 
 TEST( SolverTests, SolvesSpatialThreeLinkWithTightTolerance ) {
-	constexpr double halfPi = M_PI * 0.5;
+	constexpr double halfPi = M_PI_2;
 
 	JointSpec j1;
 	j1.axis = { 0, 0, 1 };
