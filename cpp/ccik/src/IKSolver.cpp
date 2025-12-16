@@ -25,8 +25,7 @@ std::vector<double> solveLinear( std::vector<std::vector<double>> A, const std::
 			// Avoid singular pivots by nudging the diagonal; this mirrors the
 			// damping term used elsewhere and prevents division by zero when
 			// the jacobian is rank deficient.
-			const double signSource = pivot == 0.0 ? 1.0 : pivot;
-			pivot = std::copysign( pivotEpsilon, signSource );
+			pivot = pivot >= 0.0 ? pivotEpsilon : -pivotEpsilon;
 			A[ i ][ i ] = pivot;
 		}
 

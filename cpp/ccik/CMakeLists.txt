@@ -39,8 +39,8 @@ if (BUILD_TESTING)
 	include(FetchContent)
 	FetchContent_Declare(
 		googletest
-		URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-		URL_HASH SHA256=1f357c27ca988c3f7c6b4bf68a9395005ac6761f034046e9dde0896e3aba00e4
+		URL https://github.com/google/googletest/archive/refs/tags/v1.15.0.zip
+		URL_HASH SHA256=ed98258b96c6dc8af33eeb03c8d94a05b185866604382e12980f576595bdc509
 		DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 	)
 	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)

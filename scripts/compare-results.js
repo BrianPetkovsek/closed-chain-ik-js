@@ -115,7 +115,7 @@ async function main() {
 	console.log( `Max absolute error: ${ maxError } (threshold ${ ERROR_THRESHOLD })` );
 
 	if ( maxError > ERROR_THRESHOLD ) {
-		console.error( 'WASM / JS parity failed' );
+		console.error( `WASM / JS parity failed: error ${ maxError } exceeds threshold ${ ERROR_THRESHOLD }` );
 		process.exit( 1 );
 	}
 }
