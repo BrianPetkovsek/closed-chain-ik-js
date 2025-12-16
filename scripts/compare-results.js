@@ -11,7 +11,7 @@ const LCG_NORM = 2147483646;
 function seededRandomGenerator( seed = 12345 ) {
 	let value = seed % LCG_MOD;
 	return () => {
-		value = value * LCG_MULT % LCG_MOD;
+		value = ( value * LCG_MULT ) % LCG_MOD;
 		return ( value - 1 ) / LCG_NORM;
 	};
 }
@@ -80,7 +80,7 @@ function solveWithWasm( target, ccik ) {
 	solver.solve( 50 );
 
 	const positions = solver.getPositions();
-	const end = positions[ positions.length - 1 ];
+	const end = positions.at( -1 );
 	return [ end.x, end.y, end.z ];
 }
 
