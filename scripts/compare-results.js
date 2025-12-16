@@ -80,7 +80,7 @@ function solveWithWasm( target, ccik ) {
 	solver.solve( 50 );
 
 	const positions = solver.getPositions();
-	const end = positions.at( -1 );
+	const end = positions[ positions.length - 1 ];
 	return [ end.x, end.y, end.z ];
 }
 

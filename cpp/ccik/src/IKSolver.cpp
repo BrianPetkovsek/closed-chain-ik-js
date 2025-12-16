@@ -17,15 +17,16 @@ std::vector<double> solveLinear( std::vector<std::vector<double>> A, const std::
 	if ( n == 0 ) return x;
 
 	std::vector<double> rhs = b;
+	const double pivotEpsilon = std::numeric_limits<double>::epsilon() * 10.0;
 
 	for ( std::size_t i = 0; i < n; ++i ) {
 		double pivot = A[ i ][ i ];
-		if ( std::abs( pivot ) < std::numeric_limits<double>::epsilon() ) {
+		if ( std::abs( pivot ) < pivotEpsilon ) {
 			// Avoid singular pivots by nudging the diagonal; this mirrors the
 			// damping term used elsewhere and prevents division by zero when
 			// the jacobian is rank deficient.
 			const double signSource = pivot == 0.0 ? 1.0 : pivot;
-			pivot = std::copysign( std::numeric_limits<double>::epsilon(), signSource );
+			pivot = std::copysign( pivotEpsilon, signSource );
 			A[ i ][ i ] = pivot;
 		}
 

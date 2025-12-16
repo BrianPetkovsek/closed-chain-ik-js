@@ -218,6 +218,7 @@ npm test                       # builds WASM then runs the JS + WASM Jest suite
 cmake --build build/native --target ccik_tests
 ctest --test-dir build/native  # C++ unit tests (GoogleTest)
 node scripts/compare-results.js # Randomized JS vs WASM parity check
+npm run test:js                # JS-only tests (assumes dist/ccik.js already exists)
 ```
 
 ## Using the WASM module
