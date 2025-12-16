@@ -492,13 +492,13 @@ describe( 'Joint', () => {
 			child.getWorldPosition( endPos );
 			child.getWorldQuaternion( endQuat );
 
-			const rotation = new Float32Array( 16 );
+			const inverseDoF = new Float32Array( 16 );
 			const expectedPos = new Float32Array( 3 );
 			const expectedQuat = new Float32Array( 4 );
 
-			mat4.fromRotation( rotation, - Math.PI / 2, [ 0, 0, 1 ] );
+			mat4.fromRotation( inverseDoF, - Math.PI / 2, [ 0, 0, 1 ] );
 			vec3.sub( expectedPos, startPos, joint.position );
-			vec3.transformMat4( expectedPos, expectedPos, rotation );
+			vec3.transformMat4( expectedPos, expectedPos, inverseDoF );
 			vec3.add( expectedPos, expectedPos, joint.position );
 			quat.fromEuler( expectedQuat, 0, 0, - 90 );
 
@@ -540,17 +540,18 @@ describe( 'Joint', () => {
 			child.getWorldPosition( endPos );
 			child.getWorldQuaternion( endQuat );
 
-			const rotation = new Float32Array( 16 );
+			const inverseDoF = new Float32Array( 16 );
 			const expectedAfterAttach = new Float32Array( 3 );
 			const expectedPos = new Float32Array( 3 );
 			const expectedQuat = new Float32Array( 4 );
 
-			mat4.fromRotation( rotation, Math.PI / 4, [ 0, 0, 1 ] );
+			mat4.fromRotation( inverseDoF, Math.PI / 4, [ 0, 0, 1 ] );
 			vec3.sub( expectedAfterAttach, startPos, joint.position );
-			vec3.transformMat4( expectedAfterAttach, expectedAfterAttach, rotation );
+			vec3.transformMat4( expectedAfterAttach, expectedAfterAttach, inverseDoF );
 			vec3.add( expectedAfterAttach, expectedAfterAttach, joint.position );
 
-			vec3.transformMat4( expectedPos, expectedAfterAttach, rotation );
+			// detachChild applies the inverse DoF again on the world matrix after removal
+			vec3.transformMat4( expectedPos, expectedAfterAttach, inverseDoF );
 			quat.fromEuler( expectedQuat, 0, 0, 90 );
 
 			expect( endPos[ 0 ] ).toBeCloseTo( expectedPos[ 0 ], 6 );
