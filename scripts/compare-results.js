@@ -1,5 +1,5 @@
 import { performance } from 'perf_hooks';
-import { Solver, Joint, Link, Goal } from '../src/index.js';
+import { Solver, Joint, Link, Goal, DOF } from '../src/index.js';
 import { axisToDof } from './axis-to-dof.js';
 import { loadCCIK } from '../lib/ccik-wasm.js';
 
@@ -58,7 +58,7 @@ function solveWithJS( profile, target ) {
 
 	for ( let i = 0; i < axes.length; i ++ ) {
 		const joint = new Joint();
-		joint.setDoF( axisToDof( axes[ i ] ) );
+		joint.setDoF( axisToDof( axes[ i ], DOF ) );
 		joint.setPosition( 0, 0, lengths[ i ] );
 
 		const link = new Link();
@@ -115,7 +115,7 @@ function solveWithWasm( profile, target, ccik ) {
 	const positions = solver.getPositions();
 	const endIndex = positions.size() - 1;
 	if ( endIndex < 0 ) {
-		console.warn( 'ccik returned no positions for profile', profile.name );
+		console.warn( 'ccik returned no positions for profile', profile.name, 'target', target );
 		return ORIGIN;
 	}
 

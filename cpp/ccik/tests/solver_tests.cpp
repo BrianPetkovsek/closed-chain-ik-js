@@ -1,5 +1,6 @@
 #include "ccik/IKSolver.h"
 #include <gtest/gtest.h>
+#include <cmath>
 #include <limits>
 #include <vector>
 
@@ -25,8 +26,7 @@ TEST( SolverTests, SolvesPlanarTwoLink ) {
 }
 
 TEST( SolverTests, SolvesSpatialThreeLinkWithTightTolerance ) {
-	constexpr double pi = 3.14159265358979323846;
-	constexpr double halfPi = pi * 0.5;
+	constexpr double halfPi = M_PI * 0.5;
 
 	JointSpec j1;
 	j1.axis = { 0, 0, 1 };

@@ -14,7 +14,7 @@ function buildChain( axes, lengths, goalDoF = [ DOF.X, DOF.Y, DOF.Z ] ) {
 
 		const joint = new Joint();
 		const axis = axes[ i ];
-		joint.setDoF( axisToDof( axis ) );
+		joint.setDoF( axisToDof( axis, DOF ) );
 		joint.setPosition( 0, 0, lengths[ i ] );
 
 		const link = new Link();
