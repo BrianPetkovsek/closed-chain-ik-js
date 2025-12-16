@@ -1,9 +1,12 @@
 import { performance } from 'perf_hooks';
+import fs from 'fs';
+import path from 'path';
 import { Solver, Joint, Link, Goal, DOF } from '../src/index.js';
+import { axisToDof } from './axis-to-dof.js';
 import { loadCCIK } from '../lib/ccik-wasm.js';
 
-const ERROR_THRESHOLD = Number( process.env.CCIK_MAX_ERROR || '1e-4' );
-const SAMPLE_COUNT = Number( process.env.CCIK_SAMPLES || '8' );
+const ERROR_THRESHOLD = Number( process.env.CCIK_MAX_ERROR || '5e-5' );
+const SAMPLE_COUNT = Number( process.env.CCIK_SAMPLES || '12' );
 const LCG_MOD = 2147483647;
 const LCG_MULT = 16807;
 const LCG_NORM = 2147483646;
@@ -26,69 +29,95 @@ function distance( a, b ) {
 	return Math.sqrt( dx * dx + dy * dy + dz * dz );
 }
 
-function solveWithJS( target ) {
+const PROFILES = [
+	{
+		name: 'planar-zz',
+		axes: [ [ 0, 0, 1 ], [ 0, 0, 1 ] ],
+		lengths: [ 1, 1 ],
+		target: () => {
+			const r = 1.6 * rand();
+			const theta = rand() * Math.PI * 2;
+			return [ Math.cos( theta ) * r, Math.sin( theta ) * r, 2 ];
+		},
+	},
+	{
+		name: 'spatial-yz',
+		axes: [ [ 0, 1, 0 ], [ 0, 0, 1 ], [ 1, 0, 0 ] ],
+		lengths: [ 0.8, 0.7, 0.5 ],
+		target: () => {
+			const r = 1.2 + rand() * 0.4;
+			const theta = rand() * Math.PI * 2;
+			const z = 0.6 + rand() * 0.6;
+			return [ Math.cos( theta ) * r, Math.sin( theta ) * r, z ];
+		},
+	},
+];
+
+function solveWithJS( profile, target ) {
+	const { axes, lengths } = profile;
 	const root = new Link();
+	let parent = root;
 
-	const joint1 = new Joint();
-	joint1.setDoF( DOF.EZ );
-	joint1.setPosition( 0, 0, 0 );
+	for ( let i = 0; i < axes.length; i ++ ) {
+		const joint = new Joint();
+		joint.setDoF( axisToDof( axes[ i ], DOF ) );
+		joint.setPosition( 0, 0, lengths[ i ] );
 
-	const link1 = new Link();
-	link1.setPosition( 0, 0, 1 );
+		const link = new Link();
 
-	const joint2 = new Joint();
-	joint2.setDoF( DOF.EZ );
-	joint2.setPosition( 0, 0, 1 );
-
-	const link2 = new Link();
-	link2.setPosition( 0, 0, 0 );
+		parent.addChild( joint );
+		joint.addChild( link );
+		parent = link;
+	}
 
 	const goal = new Goal();
-	link2.getWorldPosition( goal.position );
-	link2.getWorldQuaternion( goal.quaternion );
-	goal.makeClosure( link2 );
+	parent.getWorldPosition( goal.position );
+	parent.getWorldQuaternion( goal.quaternion );
+	goal.makeClosure( parent );
+	root.addChild( goal );
+	goal.setWorldPosition( ...target );
 
-	root.addChild( joint1 );
-	joint1.addChild( link1 );
-	link1.addChild( joint2 );
-	joint2.addChild( link2 );
-
-	goal.setPosition( ...target );
-
-	const solver = new Solver( root );
-	solver.maxIterations = 50;
+	const solver = new Solver( [ root, goal ] );
+	solver.maxIterations = 60;
+	solver.translationConvergeThreshold = 5e-5;
+	solver.rotationConvergeThreshold = 1e-6;
 	solver.solve();
 
 	const pos = new Float32Array( 3 );
-	link2.getWorldPosition( pos );
+	parent.getWorldPosition( pos );
 	return [ pos[ 0 ], pos[ 1 ], pos[ 2 ] ];
 }
 
-function solveWithWasm( target, ccik ) {
-	const jointSpec = {
-		axis: { x: 0, y: 0, z: 1 },
-		length: 1,
-		mode: ccik.JointMode.Rotation,
-		minLimit: -Math.PI,
-		maxLimit: Math.PI,
-		value: 0,
-		name: 'joint-1',
-	};
+function solveWithWasm( profile, target, ccik ) {
+	const { axes, lengths } = profile;
+
+	const specs = new ccik.JointSpecList();
+	for ( let i = 0; i < axes.length; i ++ ) {
+		const axis = axes[ i ];
+		specs.push_back( {
+			axis: { x: axis[ 0 ], y: axis[ 1 ], z: axis[ 2 ] },
+			length: lengths[ i ],
+			mode: ccik.JointMode.Rotation,
+			minLimit: -Math.PI,
+			maxLimit: Math.PI,
+			value: 0,
+			name: `joint-${ i + 1 }`,
+		} );
+	}
 
 	const chain = new ccik.Chain();
 	chain.setBasePosition( { x: 0, y: 0, z: 0 } );
-	const specs = new ccik.JointSpecList();
-	specs.push_back( jointSpec );
-	specs.push_back( { ...jointSpec, name: 'joint-2' } );
 	chain.setJoints( specs );
+
 	const solver = new ccik.IKSolver( chain );
 	solver.setTolerance( ccik.CCIK_TOLERANCE );
 	solver.setTarget( { x: target[ 0 ], y: target[ 1 ], z: target[ 2 ] } );
-	solver.solve( 50 );
+	solver.solve( 60 );
 
 	const positions = solver.getPositions();
 	const endIndex = positions.size() - 1;
 	if ( endIndex < 0 ) {
+		console.warn( `CCIK solver failed to compute positions for profile "${ profile.name }" with target [${ target.join( ', ' ) }]. This may indicate solver divergence or an invalid target configuration; consider relaxing joint limits or adjusting the sampled target bounds.` );
 		return ORIGIN;
 	}
 
@@ -97,33 +126,39 @@ function solveWithWasm( target, ccik ) {
 }
 
 async function main() {
+	const distPath = path.resolve( path.dirname( new URL( import.meta.url ).pathname ), '../dist/ccik.js' );
+	if ( ! fs.existsSync( distPath ) ) {
+		console.warn( 'Skipping compare-results: dist/ccik.js not found. Build the WASM module to enable parity checks.' );
+		return;
+	}
+
 	const ccik = await loadCCIK();
 	let maxError = 0;
 	let totalJs = 0;
 	let totalWasm = 0;
 
-	for ( let i = 0; i < SAMPLE_COUNT; i ++ ) {
-		const target = [
-			( rand() * 2 - 1 ) * 1.5,
-			( rand() * 2 - 1 ) * 1.5,
-			0,
-		];
+	for ( const profile of PROFILES ) {
+		for ( let i = 0; i < SAMPLE_COUNT; i ++ ) {
+			const target = profile.target();
 
-		const jsStart = performance.now();
-		const jsResult = solveWithJS( target );
-		totalJs += performance.now() - jsStart;
+			const jsStart = performance.now();
+			const jsResult = solveWithJS( profile, target );
+			totalJs += performance.now() - jsStart;
 
-		const wasmStart = performance.now();
-		const wasmResult = solveWithWasm( target, ccik );
-		totalWasm += performance.now() - wasmStart;
+			const wasmStart = performance.now();
+			const wasmResult = solveWithWasm( profile, target, ccik );
+			totalWasm += performance.now() - wasmStart;
 
-		const err = distance( jsResult, wasmResult );
-		maxError = Math.max( maxError, err );
+			const err = distance( jsResult, wasmResult );
+			maxError = Math.max( maxError, err );
+		}
 	}
 
-	console.log( `Compared ${ SAMPLE_COUNT } samples` );
-	console.log( `JS solve avg: ${( totalJs / SAMPLE_COUNT ).toFixed( 3 )} ms` );
-	console.log( `WASM solve avg: ${( totalWasm / SAMPLE_COUNT ).toFixed( 3 )} ms` );
+	const totalSamples = SAMPLE_COUNT * PROFILES.length;
+
+	console.log( `Compared ${ totalSamples } samples across ${ PROFILES.length } profiles` );
+	console.log( `JS solve avg: ${( totalJs / totalSamples ).toFixed( 3 )} ms` );
+	console.log( `WASM solve avg: ${( totalWasm / totalSamples ).toFixed( 3 )} ms` );
 	console.log( `Max absolute error: ${ maxError } (threshold ${ ERROR_THRESHOLD })` );
 
 	if ( maxError > ERROR_THRESHOLD ) {

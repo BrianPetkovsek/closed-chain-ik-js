@@ -1,6 +1,11 @@
+import { mat4, quat, vec3 } from 'gl-matrix';
 import { Link } from '../../src/core/Link.js';
 import { Joint, DOF } from '../../src/core/Joint.js';
 import { findRoots } from '../../src/core/utils/findRoots.js';
+import { quaternionDistance } from '../../src/core/utils/quaternion.js';
+import { RAD2DEG } from '../../src/core/utils/constants.js';
+
+const Z_AXIS = [ 0, 0, 1 ];
 
 describe( 'Joint', () => {
 
@@ -343,33 +348,229 @@ describe( 'Joint', () => {
 
 	describe( 'getDeltaWorldMatrix', () => {
 
-		it.todo( 'should describe an offset world matrix based on the give DoF.' );
-		it.todo( 'should return true if the delta was inverted due to a joint limit.' );
+		it( 'should describe an offset world matrix based on the give DoF.', () => {
+
+			const joint = new Joint();
+			joint.setDoF( DOF.X );
+			joint.setMinLimit( DOF.X, 0 );
+			joint.setMaxLimit( DOF.X, 0.5 );
+			joint.setDoFValue( DOF.X, 0.4 );
+			joint.updateMatrixWorld();
+
+			const outMatrix = new Float32Array( 16 );
+			const inverted = joint.getDeltaWorldMatrix( DOF.X, 0.2, outMatrix );
+			const pos = new Float32Array( 3 );
+			mat4.getTranslation( pos, outMatrix );
+
+			// When the opposite limit has more slack the delta is inverted instead of clamped.
+			expect( inverted ).toBeTruthy();
+			expect( pos[ 0 ] ).toBeCloseTo( 0.2, 6 );
+			expect( pos[ 1 ] ).toBeCloseTo( 0, 7 );
+			expect( pos[ 2 ] ).toBeCloseTo( 0, 7 );
+
+		} );
+
+		it( 'should return true if the delta was inverted due to a joint limit.', () => {
+
+			const joint = new Joint();
+			joint.setPosition( 0.1, - 0.2, 0.3 );
+			joint.setDoF( DOF.EY );
+			joint.updateMatrixWorld();
+
+			const outMatrix = new Float32Array( 16 );
+			const inverted = joint.getDeltaWorldMatrix( DOF.EY, 0.25, outMatrix );
+			const pos = new Float32Array( 3 );
+			const outQuat = new Float32Array( 4 );
+
+			mat4.getTranslation( pos, outMatrix );
+			mat4.getRotation( outQuat, outMatrix );
+
+			const expectedQuat = new Float32Array( 4 );
+			quat.fromEuler( expectedQuat, 0, 0.25 * RAD2DEG, 0 );
+
+			expect( inverted ).toBeFalsy();
+			expect( pos[ 0 ] ).toBeCloseTo( 0.1, 7 );
+			expect( pos[ 1 ] ).toBeCloseTo( - 0.2, 7 );
+			expect( pos[ 2 ] ).toBeCloseTo( 0.3, 7 );
+			expect( quaternionDistance( outQuat, expectedQuat ) ).toBeLessThan( 1e-7 );
+
+		} );
 
 	} );
 
 	describe( 'getClosureError', () => {
 
-		it.todo( 'should throw if not a closure.' );
-		it.todo( 'should return the delta pos and quat between the joint and closure link.' );
+		it( 'should throw if not a closure.', () => {
+
+			const joint = new Joint();
+			const pos = new Float32Array( 3 );
+			const quatArray = new Float32Array( 4 );
+
+			expect( () => joint.getClosureError( pos, quatArray ) ).toThrow();
+
+		} );
+
+		it( 'should return the delta pos and quat between the joint and closure link.', () => {
+
+			const joint = new Joint();
+			const link = new Link();
+
+			joint.setPosition( 0.25, - 0.5, 0.75 );
+			link.setPosition( 1.25, - 0.25, 0.5 );
+			link.setQuaternion( 0, 0, 0, 1 );
+
+			joint.makeClosure( link );
+
+			joint.updateMatrixWorld( true );
+			link.updateMatrixWorld( true );
+
+			const pos = new Float32Array( 3 );
+			const quatArray = new Float32Array( 4 );
+
+			joint.getClosureError( pos, quatArray );
+
+			expect( pos[ 0 ] ).toBeCloseTo( - 1, 6 );
+			expect( pos[ 1 ] ).toBeCloseTo( - 0.25, 6 );
+			expect( pos[ 2 ] ).toBeCloseTo( 0.25, 6 );
+			expect( quatArray[ 0 ] ).toBeCloseTo( 0, 7 );
+			expect( quatArray[ 1 ] ).toBeCloseTo( 0, 7 );
+			expect( quatArray[ 2 ] ).toBeCloseTo( 0, 7 );
+			expect( quatArray[ 3 ] ).toBeCloseTo( 0, 7 );
+
+		} );
 
 	} );
 
 	describe( 'updateMatrixDoF', () => {
 
-		it.todo( 'should update matrixDoF correctly based on the dofValues.' );
+		it( 'should update matrixDoF using updateDoFMatrix based on the dofValues.', () => {
+
+			const joint = new Joint();
+			joint.setDoF( DOF.X, DOF.EZ );
+			joint.setDoFValues( 0.3, Math.PI / 4 );
+
+			const pos = new Float32Array( 3 );
+			const outQuat = new Float32Array( 4 );
+
+			joint.updateDoFMatrix();
+			mat4.getTranslation( pos, joint.matrixDoF );
+			mat4.getRotation( outQuat, joint.matrixDoF );
+
+			const expectedQuat = new Float32Array( 4 );
+			quat.fromEuler( expectedQuat, 0, 0, Math.PI / 4 * RAD2DEG );
+
+			expect( pos[ 0 ] ).toBeCloseTo( 0.3, 7 );
+			expect( pos[ 1 ] ).toBeCloseTo( 0, 7 );
+			expect( pos[ 2 ] ).toBeCloseTo( 0, 7 );
+			expect( quaternionDistance( outQuat, expectedQuat ) ).toBeLessThan( 1e-7 );
+			expect( joint.matrixDoFNeedsUpdate ).toBeFalsy();
+
+		} );
 
 	} );
 
 	describe( 'attachChild', () => {
 
-		it.todo( 'should account for the DoF matrix when updating the world transform.' );
+		it( 'should account for the DoF matrix when updating the world transform.', () => {
+
+			const joint = new Joint();
+			const child = new Link();
+
+			joint.setDoF( DOF.EZ );
+			joint.setDoFValue( DOF.EZ, Math.PI / 2 );
+			joint.setPosition( 0.25, 0.5, - 0.25 );
+			joint.updateMatrixWorld( true );
+
+			child.setPosition( 1, - 1, 0.5 );
+			child.updateMatrixWorld();
+
+			const startPos = new Float32Array( 3 );
+			child.getWorldPosition( startPos );
+
+			joint.attachChild( child );
+			child.updateMatrixWorld();
+
+			const endPos = new Float32Array( 3 );
+			const endQuat = new Float32Array( 4 );
+			child.getWorldPosition( endPos );
+			child.getWorldQuaternion( endQuat );
+
+			const inverseDoF = new Float32Array( 16 );
+			const expectedPos = new Float32Array( 3 );
+			const expectedQuat = new Float32Array( 4 );
+
+			mat4.fromRotation( inverseDoF, - Math.PI / 2, Z_AXIS );
+			vec3.sub( expectedPos, startPos, joint.position );
+			vec3.transformMat4( expectedPos, expectedPos, inverseDoF );
+			vec3.add( expectedPos, expectedPos, joint.position );
+			mat4.getRotation( expectedQuat, inverseDoF );
+
+			expect( endPos[ 0 ] ).toBeCloseTo( expectedPos[ 0 ], 6 );
+			expect( endPos[ 1 ] ).toBeCloseTo( expectedPos[ 1 ], 6 );
+			expect( endPos[ 2 ] ).toBeCloseTo( expectedPos[ 2 ], 6 );
+			expect( quaternionDistance( endQuat, expectedQuat ) ).toBeLessThan( 1e-7 );
+
+		} );
 
 	} );
 
 	describe( 'detachChild', () => {
 
-		it.todo( 'should account for the DoF matrix when updating the world transform.' );
+		it( 'should account for the DoF matrix when updating the world transform.', () => {
+
+			const joint = new Joint();
+			const child = new Link();
+
+			joint.setDoF( DOF.EZ );
+			joint.setDoFValue( DOF.EZ, - Math.PI / 4 );
+			joint.setPosition( - 0.5, 0.25, 0.75 );
+			joint.updateMatrixWorld( true );
+
+			child.setPosition( - 1, 0.5, 0.25 );
+			child.updateMatrixWorld();
+
+			const startPos = new Float32Array( 3 );
+			child.getWorldPosition( startPos );
+
+			joint.attachChild( child );
+			child.updateMatrixWorld();
+
+			joint.detachChild( child );
+			child.updateMatrixWorld();
+
+			const endPos = new Float32Array( 3 );
+			const endQuat = new Float32Array( 4 );
+			child.getWorldPosition( endPos );
+			child.getWorldQuaternion( endQuat );
+
+			const inverseDoF = new Float32Array( 16 );
+			const toJoint = new Float32Array( 16 );
+			const fromJoint = new Float32Array( 16 );
+			const combinedTransform = new Float32Array( 16 );
+			const negativeJoint = new Float32Array( 3 );
+			const expectedPos = new Float32Array( 3 );
+			const expectedQuat = new Float32Array( 4 );
+
+			mat4.fromRotation( inverseDoF, Math.PI / 4, Z_AXIS );
+			mat4.fromTranslation( toJoint, joint.position );
+			vec3.negate( negativeJoint, joint.position );
+			mat4.fromTranslation( fromJoint, negativeJoint );
+
+			// Apply inverseDoF about the joint (T(joint) * inverseDoF * T(-joint))
+			// and then apply inverseDoF again to mirror detachChild updating the
+			// world matrix after removal: inverseDoF * T(joint) * inverseDoF * T(-joint).
+			mat4.multiply( combinedTransform, inverseDoF, fromJoint );
+			mat4.multiply( combinedTransform, toJoint, combinedTransform );
+			mat4.multiply( combinedTransform, inverseDoF, combinedTransform );
+			vec3.transformMat4( expectedPos, startPos, combinedTransform );
+			mat4.getRotation( expectedQuat, combinedTransform );
+
+			expect( endPos[ 0 ] ).toBeCloseTo( expectedPos[ 0 ], 6 );
+			expect( endPos[ 1 ] ).toBeCloseTo( expectedPos[ 1 ], 6 );
+			expect( endPos[ 2 ] ).toBeCloseTo( expectedPos[ 2 ], 6 );
+			expect( quaternionDistance( endQuat, expectedQuat ) ).toBeLessThan( 1e-7 );
+
+		} );
 
 	} );
 
