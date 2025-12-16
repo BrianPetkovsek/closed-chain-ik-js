@@ -25,7 +25,8 @@ TEST( SolverTests, SolvesPlanarTwoLink ) {
 }
 
 TEST( SolverTests, SolvesSpatialThreeLinkWithTightTolerance ) {
-	constexpr double halfPi = std::acos( -1.0 ) * 0.5;
+	constexpr double pi = 3.14159265358979323846;
+	constexpr double halfPi = pi * 0.5;
 
 	JointSpec j1;
 	j1.axis = { 0, 0, 1 };

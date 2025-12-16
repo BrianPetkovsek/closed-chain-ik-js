@@ -1,5 +1,6 @@
 import { performance } from 'perf_hooks';
-import { Solver, Joint, Link, Goal, DOF } from '../src/index.js';
+import { Solver, Joint, Link, Goal } from '../src/index.js';
+import { axisToDof } from './axis-to-dof.js';
 import { loadCCIK } from '../lib/ccik-wasm.js';
 
 const ERROR_THRESHOLD = Number( process.env.CCIK_MAX_ERROR || '5e-5' );
@@ -49,12 +50,6 @@ const PROFILES = [
 		},
 	},
 ];
-
-function axisToDof( axis ) {
-	if ( axis[ 0 ] ) return DOF.EX;
-	if ( axis[ 1 ] ) return DOF.EY;
-	return DOF.EZ;
-}
 
 function solveWithJS( profile, target ) {
 	const { axes, lengths } = profile;
@@ -119,7 +114,10 @@ function solveWithWasm( profile, target, ccik ) {
 
 	const positions = solver.getPositions();
 	const endIndex = positions.size() - 1;
-	if ( endIndex < 0 ) return ORIGIN;
+	if ( endIndex < 0 ) {
+		console.warn( 'ccik returned no positions for profile', profile.name );
+		return ORIGIN;
+	}
 
 	const end = positions.get( endIndex );
 	return [ end.x, end.y, end.z ];

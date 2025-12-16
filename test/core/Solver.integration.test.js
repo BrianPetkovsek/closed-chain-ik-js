@@ -3,6 +3,7 @@ import { Solver } from '../../src/core/Solver.js';
 import { Joint, DOF } from '../../src/core/Joint.js';
 import { Link } from '../../src/core/Link.js';
 import { Goal } from '../../src/core/Goal.js';
+import { axisToDof } from '../../scripts/axis-to-dof.js';
 
 function buildChain( axes, lengths, goalDoF = [ DOF.X, DOF.Y, DOF.Z ] ) {
 
@@ -13,8 +14,7 @@ function buildChain( axes, lengths, goalDoF = [ DOF.X, DOF.Y, DOF.Z ] ) {
 
 		const joint = new Joint();
 		const axis = axes[ i ];
-		const dof = axis[ 0 ] ? DOF.EX : axis[ 1 ] ? DOF.EY : DOF.EZ;
-		joint.setDoF( dof );
+		joint.setDoF( axisToDof( axis ) );
 		joint.setPosition( 0, 0, lengths[ i ] );
 
 		const link = new Link();
