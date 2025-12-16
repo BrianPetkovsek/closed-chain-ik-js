@@ -440,7 +440,7 @@ describe( 'Joint', () => {
 
 	describe( 'updateMatrixDoF', () => {
 
-		it( 'should update matrixDoF via updateDoFMatrix based on the dofValues.', () => {
+		it( 'should update matrixDoF using updateDoFMatrix based on the dofValues.', () => {
 
 			const joint = new Joint();
 			joint.setDoF( DOF.X, DOF.EZ );
@@ -553,7 +553,8 @@ describe( 'Joint', () => {
 			vec3.negate( negativeJoint, joint.position );
 			mat4.fromTranslation( fromJoint, negativeJoint );
 
-			// detachChild applies the inverse DoF again on the world matrix after removal
+			// Apply the inverse DoF about the joint, then apply the same inverse again
+			// to mirror detachChild updating the world matrix after removal.
 			mat4.multiply( combinedTransform, inverseDoF, fromJoint );
 			mat4.multiply( combinedTransform, toJoint, combinedTransform );
 			mat4.multiply( combinedTransform, inverseDoF, combinedTransform );
