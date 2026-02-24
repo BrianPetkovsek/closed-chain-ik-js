@@ -368,7 +368,7 @@ export class Joint extends Frame {
 	setMinLimits( ...values ) {
 
 		const { dof } = this;
-		for ( const i in values ) {
+		for ( let i = 0, l = values.length; i < l; i ++ ) {
 
 			const d = dof[ i ];
 			this.setMinLimit( d, values[ i ] );
@@ -393,7 +393,7 @@ export class Joint extends Frame {
 	setMaxLimits( ...values ) {
 
 		const { dof } = this;
-		for ( const i in values ) {
+		for ( let i = 0, l = values.length; i < l; i ++ ) {
 
 			const d = dof[ i ];
 			this.setMaxLimit( d, values[ i ] );
@@ -638,7 +638,7 @@ export class Joint extends Frame {
 				this.isClosure = false;
 
 				const index = child.closureJoints.indexOf( this );
-				child.closureJoints.splice( index, 1 );
+				if ( index !== - 1 ) child.closureJoints.splice( index, 1 );
 
 			}
 

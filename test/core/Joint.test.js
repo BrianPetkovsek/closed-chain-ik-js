@@ -75,6 +75,37 @@ describe( 'Joint', () => {
 
 	} );
 
+	describe( 'setMinLimits / setMaxLimits', () => {
+
+		it( 'should ignore enumerable properties inherited from Array.prototype', () => {
+
+			const joint = new Joint();
+			joint.setDoF( DOF.X, DOF.Z, DOF.EX );
+
+			Object.defineProperty( Array.prototype, 'testInjectedProperty', {
+				value: 100,
+				enumerable: true,
+				configurable: true,
+			} );
+
+			try {
+
+				joint.setMinLimits( 1, 2, 3 );
+				joint.setMaxLimits( 4, 5, 6 );
+
+			} finally {
+
+				delete Array.prototype.testInjectedProperty;
+
+			}
+
+			expect( joint.minDoFLimit ).toEqual( new Float32Array( [ 1, - Infinity, 2, 3, - Infinity, - Infinity ] ) );
+			expect( joint.maxDoFLimit ).toEqual( new Float32Array( [ 4, Infinity, 5, 6, Infinity, Infinity ] ) );
+
+		} );
+
+	} );
+
 	describe( 'setMatrixDoFNeedsUpdate', () => {
 
 		it( 'should mark the joint as needing a dof matrix and world matrix update.', () => {
@@ -314,6 +345,24 @@ describe( 'Joint', () => {
 
 			expect( child.closureJoints ).toEqual( [ joint ] );
 			expect( caught ).toBeTruthy();
+
+		} );
+
+		it( 'should not remove unrelated closure joints if this joint is missing from the closure list.', () => {
+
+			const joint = new Joint();
+			const otherJoint = new Joint();
+			const child = new Link();
+
+			joint.makeClosure( child );
+			child.closureJoints.push( otherJoint );
+			child.closureJoints.splice( child.closureJoints.indexOf( joint ), 1 );
+
+			joint.removeChild( child );
+
+			expect( child.closureJoints ).toEqual( [ otherJoint ] );
+			expect( joint.isClosure ).toBeFalsy();
+			expect( joint.child ).toBeNull();
 
 		} );
 
