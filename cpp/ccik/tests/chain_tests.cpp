@@ -56,6 +56,10 @@ TEST( ChainTests, HandlesZeroRotationAxisGracefully ) {
 	Chain c( { joint } );
 	const auto positions = c.getPositions();
 	ASSERT_EQ( positions.size(), 2u );
+	EXPECT_NEAR( positions[ 0 ].x, 0.0, 1e-9 );
+	EXPECT_NEAR( positions[ 0 ].y, 0.0, 1e-9 );
 	EXPECT_NEAR( positions[ 0 ].z, 1.0, 1e-9 );
+	EXPECT_NEAR( positions[ 1 ].x, 0.0, 1e-9 );
+	EXPECT_NEAR( positions[ 1 ].y, 0.0, 1e-9 );
 	EXPECT_NEAR( positions[ 1 ].z, 1.0, 1e-9 );
 }
