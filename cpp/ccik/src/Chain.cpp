@@ -1,6 +1,7 @@
 #include "ccik/Chain.h"
 #include <array>
 #include <cmath>
+#include <limits>
 
 namespace ccik {
 namespace {
@@ -33,6 +34,9 @@ Vec3 applyMat( const Mat3 &m, const Vec3 &v ) {
 }
 
 Mat3 rotationAroundAxis( const Vec3 &axis, double theta ) {
+	if ( axis.length() <= std::numeric_limits<double>::epsilon() ) {
+		return identity();
+	}
 	const Vec3 n = axis.normalized();
 	const double c = std::cos( theta );
 	const double s = std::sin( theta );
