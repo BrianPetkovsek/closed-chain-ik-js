@@ -77,7 +77,7 @@ describe( 'Joint', () => {
 
 	describe( 'setMinLimits / setMaxLimits', () => {
 
-		it( 'should ignore enumerable properties inherited from Array.prototype.', () => {
+		it( 'should ignore enumerable properties inherited from Array.prototype', () => {
 
 			const joint = new Joint();
 			joint.setDoF( DOF.X, DOF.Z, DOF.EX );
