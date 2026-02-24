@@ -7,6 +7,20 @@ const tempPos = new Float64Array( 3 );
 const tempQuat = new Float64Array( 4 );
 const tempQuat2 = new Float64Array( 4 );
 const tempEuler = new Float64Array( 3 );
+
+function rotationAxisToEulerIndex( axis ) {
+
+	switch ( axis ) {
+
+		case DOF.EX: return 0;
+		case DOF.EY: return 1;
+		case DOF.EZ: return 2;
+		default: throw new Error( 'Invalid rotational DoF axis.' );
+
+	}
+
+}
+
 export function accumulateClosureError(
 	solver,
 	joint,
@@ -180,10 +194,19 @@ export function accumulateTargetError(
 
 	} else {
 
-		rotDelta =
-			dofTarget[ DOF.EX ] - dofValues[ DOF.EX ] +
-			dofTarget[ DOF.EY ] - dofValues[ DOF.EY ] +
-			dofTarget[ DOF.EZ ] - dofValues[ DOF.EZ ];
+		tempEuler[ 0 ] = 0;
+		tempEuler[ 1 ] = 0;
+		tempEuler[ 2 ] = 0;
+		// Joint.setDoF enforces XYZ translation axes before EXYZ rotation axes.
+		for ( let i = translationDoFCount, l = translationDoFCount + rotationDoFCount; i < l; i ++ ) {
+
+			const axis = dof[ i ];
+			const index = rotationAxisToEulerIndex( axis );
+			tempEuler[ index ] = dofTarget[ axis ] - dofValues[ axis ];
+
+		}
+
+		rotDelta = vec3.length( tempEuler );
 
 	}
 
@@ -244,7 +267,7 @@ export function accumulateTargetError(
 
 			}
 
-			errorVector[ startIndex + rowIndex ][ 0 ] = tempEuler[ axis - DOF.EX ];
+			errorVector[ startIndex + rowIndex ][ 0 ] = tempEuler[ rotationAxisToEulerIndex( axis ) ];
 			rowIndex ++;
 
 		}
