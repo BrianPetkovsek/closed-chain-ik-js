@@ -1,9 +1,26 @@
-import { vec3, vec4 } from 'gl-matrix';
+import { vec3, vec4, quat } from 'gl-matrix';
 import { DOF } from '../Joint.js';
+import { quaternionDistance } from './quaternion.js';
+import { RAD2DEG } from './constants.js';
 
 const tempPos = new Float64Array( 3 );
 const tempQuat = new Float64Array( 4 );
+const tempQuat2 = new Float64Array( 4 );
 const tempEuler = new Float64Array( 3 );
+
+function rotationAxisToEulerIndex( axis ) {
+
+	switch ( axis ) {
+
+		case DOF.EX: return 0;
+		case DOF.EY: return 1;
+		case DOF.EZ: return 2;
+		default: throw new Error( 'Invalid rotational DoF axis.' );
+
+	}
+
+}
+
 export function accumulateClosureError(
 	solver,
 	joint,
@@ -143,6 +160,8 @@ export function accumulateTargetError(
 		translationErrorClamp,
 		rotationErrorClamp,
 		lockedJointDoF,
+		translationFactor,
+		rotationFactor,
 	} = solver;
 
 	const {
@@ -150,22 +169,46 @@ export function accumulateTargetError(
 		dofValues,
 		translationDoFCount,
 		rotationDoFCount,
-		translationFactor,
-		rotationFactor,
-		dofList,
+		dof,
 	} = joint;
 
 	// get the position delta
 	const posDelta = vec3.distance( dofValues, dofTarget );
 
-	// TODO: if three euler angles are being used we should set this to a quaternion to measure
-	// error rather than euler angles. We should instead just always use quaternions for targets
-	// for now.
-	// Before running this solver we try to ensure the target and restPose are minimized
-	let rotDelta =
-		dofTarget[ DOF.EX ] - dofValues[ DOF.EX ] +
-		dofTarget[ DOF.EY ] - dofValues[ DOF.EY ] +
-		dofTarget[ DOF.EZ ] - dofValues[ DOF.EZ ];
+	let rotDelta = 0;
+	if ( rotationDoFCount === 3 ) {
+
+		quat.fromEuler(
+			tempQuat,
+			dofValues[ DOF.EX ] * RAD2DEG,
+			dofValues[ DOF.EY ] * RAD2DEG,
+			dofValues[ DOF.EZ ] * RAD2DEG,
+		);
+		quat.fromEuler(
+			tempQuat2,
+			dofTarget[ DOF.EX ] * RAD2DEG,
+			dofTarget[ DOF.EY ] * RAD2DEG,
+			dofTarget[ DOF.EZ ] * RAD2DEG,
+		);
+		rotDelta = quaternionDistance( tempQuat, tempQuat2 );
+
+	} else {
+
+		tempEuler[ 0 ] = 0;
+		tempEuler[ 1 ] = 0;
+		tempEuler[ 2 ] = 0;
+		// Joint.setDoF enforces XYZ translation axes before EXYZ rotation axes.
+		for ( let i = translationDoFCount, l = translationDoFCount + rotationDoFCount; i < l; i ++ ) {
+
+			const axis = dof[ i ];
+			const index = rotationAxisToEulerIndex( axis );
+			tempEuler[ index ] = dofTarget[ axis ] - dofValues[ axis ];
+
+		}
+
+		rotDelta = vec3.length( tempEuler );
+
+	}
 
 	// Get the row count
 	const lockedDoFCount = lockedJointDoFCount.get( joint ) || 0;
@@ -190,16 +233,16 @@ export function accumulateTargetError(
 		vec3.scale( tempPos, tempPos, translationFactor * translationErrorClamp / posMag );
 		for ( let i = 0, l = translationDoFCount; i < l; i ++ ) {
 
-			const dof = dofList[ i ];
+			const axis = dof[ i ];
 
 			// skip this degree of freedom if it's locked
-			if ( isLocked && lockedDoF[ dof ] ) {
+			if ( isLocked && lockedDoF[ axis ] ) {
 
 				continue;
 
 			}
 
-			errorVector[ startIndex + rowIndex ][ 0 ] = tempPos[ dof ];
+			errorVector[ startIndex + rowIndex ][ 0 ] = tempPos[ axis ];
 			rowIndex ++;
 
 		}
@@ -215,16 +258,16 @@ export function accumulateTargetError(
 		vec3.scale( tempEuler, tempEuler, rotationFactor * rotationErrorClamp / eulerMag );
 		for ( let i = translationDoFCount, l = translationDoFCount + rotationDoFCount; i < l; i ++ ) {
 
-			const dof = dofList[ i ];
+			const axis = dof[ i ];
 
 			// skip this degree of freedom if it's locked
-			if ( isLocked && lockedDoF[ dof ] ) {
+			if ( isLocked && lockedDoF[ axis ] ) {
 
 				continue;
 
 			}
 
-			errorVector[ startIndex + rowIndex ][ 0 ] = tempEuler[ dof ];
+			errorVector[ startIndex + rowIndex ][ 0 ] = tempEuler[ rotationAxisToEulerIndex( axis ) ];
 			rowIndex ++;
 
 		}

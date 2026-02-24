@@ -26,12 +26,19 @@ export class WorkerSolver {
 		this.jointsToUpdate = null;
 		this.jointsToIndexMap = null;
 		this.scheduledStateUpdate = false;
+		this.structureVersion = 0;
 
 		const worker = new Worker( new URL( './workerSolver.worker.js', import.meta.url ), { type: 'module' } );
 		let scheduled = false;
 		worker.onmessage = ( { data: e } ) => {
 
 			if ( e.type === 'updateSolve' ) {
+
+				if ( e.data.structureVersion !== this.structureVersion ) {
+
+					return;
+
+				}
 
 				// If the solve is completed then schedule a copy onto our joints to avoid
 				// copying multiple times per frame.
@@ -95,6 +102,7 @@ export class WorkerSolver {
 		// normal array buffers so we don't respond to an outdated update event?
 
 		const { worker } = this;
+		const structureVersion = ++ this.structureVersion;
 
 		const roots = findRoots( this.roots );
 
@@ -155,6 +163,7 @@ export class WorkerSolver {
 				data: {
 					serialized,
 					buffer,
+					structureVersion,
 				},
 			} );
 
@@ -165,6 +174,7 @@ export class WorkerSolver {
 				data: {
 					serialized,
 					buffer,
+					structureVersion,
 				},
 			}, [ buffer ] );
 

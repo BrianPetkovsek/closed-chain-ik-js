@@ -15,6 +15,7 @@ let frames = null;
 let buffer = null;
 let floatBuffer = null;
 let byteBuffer = null;
+let structureVersion = 0;
 
 self.onmessage = function ( { data: e } ) {
 
@@ -26,6 +27,7 @@ self.onmessage = function ( { data: e } ) {
 			frames = deserialize( data.serialized );
 			solver.roots = frames.filter( f => f.parent === null );
 			solver.updateStructure();
+			structureVersion = data.structureVersion;
 
 			buffer = data.buffer;
 			byteBuffer = new Uint8Array( buffer );
@@ -98,6 +100,7 @@ function updateSolve() {
 			type: 'updateSolve',
 			data: {
 				status,
+				structureVersion,
 			},
 
 		} );
@@ -110,6 +113,7 @@ function updateSolve() {
 			type: 'updateSolve',
 			data: {
 				status,
+				structureVersion,
 				buffer: resultsBuffer,
 			},
 
